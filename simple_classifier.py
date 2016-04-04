@@ -28,8 +28,8 @@ def activation(x):
 # A fully connected layer: activation(matrix-multiply + bias)
 def layer(name, x, num_inputs, num_outputs):
     with tf.name_scope(name) as scope:
-        weight = tf.Variable(np.random.uniform(size=(num_inputs, num_outputs)).astype(np.float32), name='weight')
-        bias = tf.Variable(0.0, name='bias')
+        weight = tf.Variable(np.random.uniform(low=-1, high=1, size=(num_inputs, num_outputs)).astype(np.float32), name='weight')
+        bias = tf.Variable(np.zeros(num_outputs).astype(np.float32), name='bias')
         return activation(tf.matmul(x, weight) + bias), weight, bias
 
 # slap a few layers together
