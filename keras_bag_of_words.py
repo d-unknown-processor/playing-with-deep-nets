@@ -5,17 +5,21 @@ import random
 import numpy as np
 
 from keras.models import Sequential, Graph
-from keras.preprocessing import text
+from keras.preprocessing import sequence, text
 from keras.preprocessing.text import Tokenizer
 from keras.regularizers import l1, l2
 from keras.layers.embeddings import Embedding
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense
 from keras.layers.recurrent import LSTM
 
-SEQ_LENGTH = 64
+SEQ_LENGTH = 400
+LSTM_SIZE = 128
 BATCH_SIZE = 16
 HIDDEN_SIZE = 256
 NUM_WORDS = 10000
+
+MODEL = "LSTM"
+FEATURE_TYPE = "binary"
 
 examples = [json.loads(line) for line in open('topic-sample.json').readlines() if line]
 random.seed(1234)
@@ -54,8 +58,8 @@ def build_mlp():
 
 def build_lstm():
     model = Sequential()
-    model.add(Embedding(vocab_size, 128))
-    model.add(LSTM(32, activation="relu"))
+    model.add(Embedding(vocab_size, LSTM_SIZE, input_length=SEQ_LENGTH))
+    model.add(LSTM(LSTM_SIZE, activation="relu"))
     model.add(Dropout(0.2))
     model.add(Dense(2))
     model.add(Activation('softmax'))
@@ -63,10 +67,19 @@ def build_lstm():
     return model
 
 print 'Building model.'
-training_model = build_mlp()
+if MODEL == "LSTM":
+    training_model = build_lstm()
+elif MODEL == "LR":
+    training_model = build_lr_model()
+elif MODEL == "MLP":
+    training_model = build_mlp()
 print '... done'
 
-X = tokenizer.texts_to_matrix(data, "binary")
+if MODEL == "LSTM":
+    sequences = tokenizer.texts_to_sequences(data)
+    X = sequence.pad_sequences(sequences, maxlen=SEQ_LENGTH)
+else:
+    X = tokenizer.texts_to_matrix(data, FEATURE_TYPE)
 Y = np.zeros((len(data), 2))
 for i, ex in enumerate(examples):
     if ex['topic'] == 'compsci': Y[i,0] = 1
